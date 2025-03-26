@@ -41,7 +41,7 @@ const Navbar = () => {
           to="/" 
           className="text-xl font-bold tracking-tight text-primary hover:opacity-90 transition-opacity"
         >
-          IoT Data Marketplace NTTF
+          IoT Data Marketplace
         </Link>
         
         <nav className="hidden md:flex items-center space-x-1">
