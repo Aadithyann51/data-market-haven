@@ -1,14 +1,15 @@
 
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, CSSProperties } from "react";
 
 interface BlurContainerProps {
   children: ReactNode;
   className?: string;
   darker?: boolean;
+  style?: CSSProperties;
 }
 
-const BlurContainer = ({ children, className, darker = false }: BlurContainerProps) => {
+const BlurContainer = ({ children, className, darker = false, style }: BlurContainerProps) => {
   return (
     <div
       className={cn(
@@ -16,6 +17,7 @@ const BlurContainer = ({ children, className, darker = false }: BlurContainerPro
         "rounded-xl p-6",
         className
       )}
+      style={style}
     >
       {children}
     </div>
