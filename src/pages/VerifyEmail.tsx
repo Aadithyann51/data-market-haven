@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { verifyEmail } from "@/utils/auth";
+import { supabase } from "@/utils/supabaseClient";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -11,37 +10,55 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    const email = searchParams.get('email');
-    const token = searchParams.get('token');
+    const checkVerificationStatus = async () => {
+      try {
+        // In a Supabase app, verification would be handled by Supabase's redirect
+        // Here we're checking if the current user is verified (has confirmed email)
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user && user.email_confirmed_at) {
+          setVerificationStatus('success');
+          toast({
+            title: "Email Verified!",
+            description: "Your account is now active. You can now log in.",
+          });
+        } else {
+          // If we're on this page but the user isn't verified, either:
+          // 1. They clicked a verification link that didn't complete
+          // 2. They navigated here directly without verification
+          setVerificationStatus('failed');
+          toast({
+            title: "Verification Failed",
+            description: "Your email could not be verified. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error verifying email:", error);
+        setVerificationStatus('failed');
+        toast({
+          title: "Verification Error",
+          description: "An error occurred during verification. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
     
-    if (!email || !token) {
-      setVerificationStatus('failed');
-      toast({
-        title: "Verification Failed",
-        description: "Invalid verification link. Please try registering again.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Supabase auth state change will detect verification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        checkVerificationStatus();
+      }
+    });
     
-    // Verify the email
-    const isVerified = verifyEmail(email, token);
+    // Check verification status on page load
+    checkVerificationStatus();
     
-    if (isVerified) {
-      setVerificationStatus('success');
-      toast({
-        title: "Email Verified!",
-        description: "Your account is now active. You can now log in.",
-      });
-    } else {
-      setVerificationStatus('failed');
-      toast({
-        title: "Verification Failed",
-        description: "Invalid or expired verification link. Please try registering again.",
-        variant: "destructive",
-      });
-    }
-  }, [searchParams]);
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   
   return (
     <div className="min-h-screen pt-32 pb-16 px-4 flex flex-col items-center justify-center bg-gradient-to-b from-white to-secondary/30">

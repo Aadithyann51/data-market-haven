@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,14 +34,15 @@ const AuthForm = ({ type }: AuthFormProps) => {
           throw new Error("Passwords do not match");
         }
         
-        // Register new user
-        const result = registerUser(email, password);
+        // Register new user with Supabase
+        const result = await registerUser(email, password);
         
         if (!result.success) {
-          throw new Error("Email already registered. Please login instead.");
+          throw new Error("Email already registered or registration failed. Please try again.");
         }
         
-        // Send verification email
+        // In a real Supabase app, Supabase handles email verification
+        // This is kept for demo purposes
         if (result.verificationToken) {
           simulateSendVerificationEmail(email, result.verificationToken);
         }
@@ -50,21 +50,18 @@ const AuthForm = ({ type }: AuthFormProps) => {
         // Registration successful
         toast({
           title: "Account created successfully!",
-          description: "Please check your email (console) for verification instructions.",
+          description: "Please check your email for verification instructions.",
         });
         
       } else {
-        // Login existing user
-        const authResult = authenticateUser(email, password);
+        // Login existing user with Supabase
+        const authResult = await authenticateUser(email, password);
         
         if (!authResult.success) {
           throw new Error(authResult.message);
         }
         
         // Login successful
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
-        
         toast({
           title: "Welcome back!",
           description: "You are now signed in.",

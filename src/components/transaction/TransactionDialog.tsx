@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Dialog,
@@ -10,9 +9,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, Wallet, Download, ExternalLink } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { connectWallet, sendTransaction, formatAddress, convertToEth } from "@/utils/ethereum";
 import { Separator } from "@/components/ui/separator";
+import { createTransaction } from "@/utils/database";
+import { isAuthenticated } from "@/utils/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 interface TransactionDialogProps {
   isOpen: boolean;
@@ -32,13 +34,13 @@ const TransactionDialog = ({
   dataItem,
   onTransactionComplete
 }: TransactionDialogProps) => {
-  const { toast } = useToast();
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [txHash, setTxHash] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   // Demo receiver address (in a real app, this would be the data provider's address)
   const receiverAddress = "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199";
@@ -46,6 +48,20 @@ const TransactionDialog = ({
   const ethPrice = dataItem ? convertToEth(dataItem.price) : "0";
 
   const handleConnectWallet = async () => {
+    // First check if user is authenticated
+    const userIsAuthenticated = await isAuthenticated();
+    
+    if (!userIsAuthenticated) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "You must be logged in to purchase data. Please sign in first.",
+      });
+      setIsOpen(false);
+      navigate('/login');
+      return;
+    }
+    
     setError("");
     const { connected, address, error } = await connectWallet();
     
@@ -71,29 +87,33 @@ const TransactionDialog = ({
     const { success, hash, error } = await sendTransaction(
       receiverAddress,
       ethPrice,
-      (hash) => {
+      async (hash) => {
         setTxHash(hash);
+        
+        // Record transaction in Supabase
+        if (dataItem) {
+          try {
+            const result = await createTransaction(
+              dataItem.id,
+              dataItem.title,
+              dataItem.price,
+              ethPrice,
+              dataItem.provider,
+              hash
+            );
+            
+            if (!result.success) {
+              console.error("Failed to record transaction:", result.error);
+              // Continue anyway as the blockchain transaction was successful
+            }
+          } catch (err) {
+            console.error("Error recording transaction:", err);
+            // Continue anyway as the blockchain transaction was successful
+          }
+        }
+        
         setCompleted(true);
         setProcessing(false);
-        
-        // Record transaction
-        const existingTransactions = JSON.parse(localStorage.getItem("transactions") || "[]");
-        const newTransaction = {
-          id: Date.now(),
-          dataId: dataItem.id,
-          dataTitle: dataItem.title,
-          price: dataItem.price,
-          ethPrice,
-          provider: dataItem.provider,
-          date: new Date().toISOString(),
-          txHash: hash,
-          status: "completed"
-        };
-        
-        localStorage.setItem(
-          "transactions", 
-          JSON.stringify([newTransaction, ...existingTransactions])
-        );
         
         setTimeout(() => {
           setIsOpen(false);

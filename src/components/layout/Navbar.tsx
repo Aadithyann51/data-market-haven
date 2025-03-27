@@ -2,16 +2,35 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/utils/supabaseClient";
+import { signOutUser } from "@/utils/auth";
+import { toast } from "@/components/ui/use-toast";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   
-  // Check if user is authenticated (placeholder - to be replaced with actual auth logic)
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-
   useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      setUserEmail(session?.user?.email || null);
+    };
+    
+    checkAuth();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      setUserEmail(session?.user?.email || null);
+    });
+    
+    // Handle scroll for navbar styling
     const handleScroll = () => {
       const offset = window.scrollY;
       if (offset > 50) {
@@ -22,10 +41,30 @@ const Navbar = () => {
     };
 
     window.addEventListener("scroll", handleScroll);
+    
+    // Cleanup
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      subscription.unsubscribe();
     };
   }, []);
+
+  const handleSignOut = async () => {
+    const result = await signOutUser();
+    if (result.success) {
+      toast({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
+      });
+      navigate('/');
+    } else {
+      toast({
+        title: "Error signing out",
+        description: result.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <header
@@ -68,33 +107,46 @@ const Navbar = () => {
             About
           </Link>
           {isAuthenticated && (
-            <Link 
-              to="/dashboard" 
-              className={cn(
-                "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                location.pathname === "/dashboard" 
-                  ? "text-primary" 
-                  : "text-foreground/80 hover:text-foreground hover:bg-muted"
-              )}
-            >
-              Dashboard
-            </Link>
+            <>
+              <Link 
+                to="/dashboard" 
+                className={cn(
+                  "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  location.pathname === "/dashboard" 
+                    ? "text-primary" 
+                    : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Dashboard
+              </Link>
+              <Link 
+                to="/transactions" 
+                className={cn(
+                  "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  location.pathname === "/transactions" 
+                    ? "text-primary" 
+                    : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Transactions
+              </Link>
+            </>
           )}
         </nav>
         
         <div className="flex items-center space-x-3">
           {isAuthenticated ? (
             <>
+              <span className="text-sm text-muted-foreground hidden md:inline-block">
+                {userEmail}
+              </span>
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm">Dashboard</Button>
               </Link>
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => {
-                  localStorage.removeItem("isAuthenticated");
-                  window.location.href = "/";
-                }}
+                onClick={handleSignOut}
               >
                 Sign Out
               </Button>

@@ -3,31 +3,50 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileDown, ReceiptText } from "lucide-react";
+import { Download, FileDown, ExternalLink, ReceiptText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Transaction {
-  id: number;
-  dataId: number;
-  dataTitle: string;
-  price: string;
-  provider: string;
-  date: string;
-  status: string;
-}
+import { fetchUserTransactions, Transaction } from "@/utils/database";
+import { isAuthenticated } from "@/utils/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Load transactions from localStorage for demo purposes
-    // In a real application, this would be fetched from an API
-    const storedTransactions = JSON.parse(localStorage.getItem("transactions") || "[]");
-    setTransactions(storedTransactions);
-    setLoading(false);
-  }, []);
+    const checkAuthAndLoadTransactions = async () => {
+      const userAuthenticated = await isAuthenticated();
+      
+      if (!userAuthenticated) {
+        navigate('/login');
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to view your transactions.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Load transactions from Supabase
+      try {
+        const userTransactions = await fetchUserTransactions();
+        setTransactions(userTransactions);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        toast({
+          title: "Error Loading Transactions",
+          description: "Failed to load your transactions. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAuthAndLoadTransactions();
+  }, [navigate, toast]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -43,14 +62,14 @@ const Transactions = () => {
   const handleDownload = (transaction: Transaction) => {
     toast({
       title: "Download Started",
-      description: `${transaction.dataTitle} is being downloaded`,
+      description: `${transaction.data_title} is being downloaded`,
     });
     
     // Simulate download completion
     setTimeout(() => {
       toast({
         title: "Download Complete",
-        description: `${transaction.dataTitle} has been successfully downloaded`,
+        description: `${transaction.data_title} has been successfully downloaded`,
       });
     }, 2000);
   };
@@ -58,7 +77,7 @@ const Transactions = () => {
   const handleExportReceipt = (transaction: Transaction) => {
     toast({
       title: "Exporting Receipt",
-      description: `Receipt for ${transaction.dataTitle} is being generated`,
+      description: `Receipt for ${transaction.data_title} is being generated`,
     });
     
     // Simulate export completion
@@ -68,6 +87,12 @@ const Transactions = () => {
         description: "Transaction receipt has been downloaded",
       });
     }, 1500);
+  };
+
+  const openEtherscan = (txHash: string | undefined) => {
+    if (txHash) {
+      window.open(`https://sepolia.etherscan.io/tx/${txHash}`, '_blank');
+    }
   };
 
   return (
@@ -100,7 +125,7 @@ const Transactions = () => {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle>{transaction.dataTitle}</CardTitle>
+                      <CardTitle>{transaction.data_title}</CardTitle>
                       <CardDescription>
                         Transaction ID: {transaction.id}
                       </CardDescription>
@@ -125,6 +150,20 @@ const Transactions = () => {
                       <p className="font-bold">{transaction.price}</p>
                     </div>
                   </div>
+                  
+                  {transaction.tx_hash && (
+                    <div className="mb-4">
+                      <p className="text-sm text-muted-foreground mb-1">Blockchain Transaction</p>
+                      <div className="flex items-center gap-2">
+                        <code className="bg-slate-100 px-2 py-1 rounded text-xs flex-grow overflow-hidden text-ellipsis">
+                          {transaction.tx_hash}
+                        </code>
+                        <Button variant="outline" size="sm" onClick={() => openEtherscan(transaction.tx_hash)}>
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="flex flex-col sm:flex-row gap-2 mt-4">
                     <Button 
@@ -158,7 +197,7 @@ const Transactions = () => {
             </CardHeader>
             <CardContent>
               <Button 
-                onClick={() => window.location.href = '/browse-data'}
+                onClick={() => navigate('/browse-data')}
                 className="gap-1"
               >
                 <FileDown className="h-4 w-4" /> Browse Data Sets
