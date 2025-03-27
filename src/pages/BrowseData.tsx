@@ -10,7 +10,7 @@ import { Search, Filter, Download } from "lucide-react";
 const BrowseData = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   
   // Sample data
   const dataListings = [
@@ -82,7 +82,7 @@ const BrowseData = () => {
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = categoryFilter === "" || item.category === categoryFilter;
+    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
     
     return matchesSearch && matchesCategory;
   });
@@ -121,7 +121,7 @@ const BrowseData = () => {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map(category => (
                 <SelectItem key={category} value={category}>{category}</SelectItem>
               ))}
