@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Download } from "lucide-react";
+import { Search, Filter, Download, Eye } from "lucide-react";
 
 const BrowseData = () => {
   const navigate = useNavigate();
@@ -90,8 +90,15 @@ const BrowseData = () => {
   // Get unique categories for filter dropdown
   const categories = [...new Set(dataListings.map(item => item.category))];
 
-  // Authentication check would normally go here
-  // For demo purposes, let's assume the user is authenticated
+  const handleViewDetails = (id: number) => {
+    navigate(`/data/${id}`);
+  };
+
+  // Check for purchased items
+  const transactions = JSON.parse(localStorage.getItem("transactions") || "[]");
+  const isPurchased = (id: number) => {
+    return transactions.some((t: any) => t.dataId === id);
+  };
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 bg-secondary/30">
@@ -127,6 +134,14 @@ const BrowseData = () => {
               ))}
             </SelectContent>
           </Select>
+          
+          <Button 
+            variant="outline" 
+            className="gap-1"
+            onClick={() => navigate("/transactions")}
+          >
+            My Purchases
+          </Button>
         </div>
         
         {/* Results */}
@@ -164,9 +179,33 @@ const BrowseData = () => {
                 </CardContent>
                 <CardFooter className="flex justify-between border-t pt-4">
                   <span className="font-bold">{item.price}</span>
-                  <Button size="sm" className="gap-1">
-                    <Download className="h-4 w-4" /> Purchase
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => handleViewDetails(item.id)}
+                    >
+                      <Eye className="h-4 w-4" /> Details
+                    </Button>
+                    {isPurchased(item.id) ? (
+                      <Button 
+                        size="sm" 
+                        className="gap-1"
+                        onClick={() => handleViewDetails(item.id)}
+                      >
+                        <Download className="h-4 w-4" /> Download
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        className="gap-1"
+                        onClick={() => handleViewDetails(item.id)}
+                      >
+                        Purchase
+                      </Button>
+                    )}
+                  </div>
                 </CardFooter>
               </Card>
             ))

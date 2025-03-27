@@ -11,6 +11,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import BrowseData from "./pages/BrowseData";
 import SellData from "./pages/SellData";
+import DataDetails from "./pages/DataDetails";
+import Transactions from "./pages/Transactions";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/layout/Navbar";
@@ -33,6 +35,8 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/browse-data" element={<BrowseData />} />
+            <Route path="/data/:id" element={<DataDetails />} />
+            <Route path="/transactions" element={<Transactions />} />
             <Route path="/sell-data" element={<SellData />} />
             <Route path="/about" element={<About />} />
             <Route path="*" element={<NotFound />} />
