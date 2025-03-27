@@ -33,6 +33,16 @@ const Footer = () => {
                   Dashboard
                 </Link>
               </li>
+              <li>
+                <Link to="/browse-data" className="text-sm text-foreground/80 hover:text-primary transition-colors">
+                  Browse Data
+                </Link>
+              </li>
+              <li>
+                <Link to="/sell-data" className="text-sm text-foreground/80 hover:text-primary transition-colors">
+                  Sell Data
+                </Link>
+              </li>
             </ul>
           </div>
           

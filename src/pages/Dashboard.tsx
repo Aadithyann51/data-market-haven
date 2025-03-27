@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import BlurContainer from "@/components/ui/BlurContainer";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { BarChart3, Upload, Download, Clock, Settings, Plus } from "lucide-react";
 
 const Dashboard = () => {
@@ -77,9 +77,11 @@ const Dashboard = () => {
             <BlurContainer>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">My Data Listings</h2>
-                <Button size="sm" className="flex items-center">
-                  <Plus className="h-4 w-4 mr-1" /> New Listing
-                </Button>
+                <Link to="/sell-data">
+                  <Button size="sm" className="flex items-center">
+                    <Plus className="h-4 w-4 mr-1" /> New Listing
+                  </Button>
+                </Link>
               </div>
               
               {myListings.length > 0 ? (
@@ -106,7 +108,9 @@ const Dashboard = () => {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">You don't have any active listings</p>
-                  <Button className="mt-4">Create Your First Listing</Button>
+                  <Link to="/sell-data">
+                    <Button className="mt-4">Create Your First Listing</Button>
+                  </Link>
                 </div>
               )}
             </BlurContainer>
@@ -156,12 +160,16 @@ const Dashboard = () => {
               <h2 className="text-xl font-semibold mb-4">Marketplace</h2>
               
               <div className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <Download className="h-4 w-4 mr-2" /> Browse Data
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Upload className="h-4 w-4 mr-2" /> Sell Data
-                </Button>
+                <Link to="/browse-data" className="block w-full">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Download className="h-4 w-4 mr-2" /> Browse Data
+                  </Button>
+                </Link>
+                <Link to="/sell-data" className="block w-full">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Upload className="h-4 w-4 mr-2" /> Sell Data
+                  </Button>
+                </Link>
                 <Button className="w-full justify-start" variant="outline">
                   <Settings className="h-4 w-4 mr-2" /> API Settings
                 </Button>
