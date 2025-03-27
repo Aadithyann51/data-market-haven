@@ -3,9 +3,10 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, Star } from "lucide-react";
+import { ArrowLeft, Download, Star, Shield } from "lucide-react";
 import TransactionDialog from "@/components/transaction/TransactionDialog";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 const DataDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -181,7 +182,12 @@ const DataDetails = () => {
           <CardHeader>
             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
               <div>
-                <CardTitle className="text-3xl">{data.title}</CardTitle>
+                <div className="flex items-center gap-2 mb-2">
+                  <CardTitle className="text-3xl">{data.title}</CardTitle>
+                  <Badge variant="outline" className="border-green-500 text-green-600 flex items-center gap-1">
+                    <Shield className="h-3 w-3" /> Blockchain Verified
+                  </Badge>
+                </div>
                 <CardDescription className="mt-2 text-lg">{data.description}</CardDescription>
               </div>
               <div className="flex items-center gap-1 px-3 py-1 bg-primary/10 rounded-full text-primary">
@@ -241,7 +247,7 @@ const DataDetails = () => {
             {alreadyPurchased ? (
               <>
                 <div className="flex-grow text-green-600 font-medium">
-                  ✓ Purchased
+                  ✓ Purchased on Blockchain 
                 </div>
                 <Button onClick={handleDownload} className="w-full sm:w-auto gap-1">
                   <Download className="h-4 w-4" /> Download Data
@@ -254,6 +260,9 @@ const DataDetails = () => {
                   {data.price.includes('/month') && 
                     <span className="ml-2 text-sm text-muted-foreground">(subscription)</span>
                   }
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Payments secured by Ethereum blockchain
+                  </div>
                 </div>
                 <Button onClick={handlePurchase} className="w-full sm:w-auto">
                   Purchase Data
