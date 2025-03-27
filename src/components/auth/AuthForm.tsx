@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
+import { authenticateUser, registerUser } from "@/utils/auth";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BlurContainer from "../ui/BlurContainer";
@@ -29,23 +30,44 @@ const AuthForm = ({ type }: AuthFormProps) => {
         throw new Error("Please fill in all fields");
       }
       
-      if (type === "register" && password !== confirmPassword) {
-        throw new Error("Passwords do not match");
+      if (type === "register") {
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+        
+        // Register new user
+        const registrationSuccess = registerUser(email, password);
+        
+        if (!registrationSuccess) {
+          throw new Error("Email already registered. Please login instead.");
+        }
+        
+        // Registration successful
+        toast({
+          title: "Account created successfully!",
+          description: "You can now sign in with your credentials.",
+        });
+        
+        navigate("/login");
+      } else {
+        // Login existing user
+        const isAuthenticated = authenticateUser(email, password);
+        
+        if (!isAuthenticated) {
+          throw new Error("Invalid email or password. Please try again or register if you don't have an account.");
+        }
+        
+        // Login successful
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", email);
+        
+        toast({
+          title: "Welcome back!",
+          description: "You are now signed in.",
+        });
+        
+        navigate("/dashboard");
       }
-      
-      // In a real app, this would be an API call
-      // Simulating API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Success - in a real app, this would store tokens, etc.
-      localStorage.setItem("isAuthenticated", "true");
-      
-      toast({
-        title: type === "login" ? "Welcome back!" : "Account created successfully!",
-        description: "You are now signed in.",
-      });
-      
-      navigate("/dashboard");
     } catch (error) {
       toast({
         title: "Error",
