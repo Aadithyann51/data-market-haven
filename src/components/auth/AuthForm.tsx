@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
-import { authenticateUser, registerUser } from "@/utils/auth";
+import { authenticateUser, registerUser, simulateSendVerificationEmail } from "@/utils/auth";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BlurContainer from "../ui/BlurContainer";
@@ -36,25 +36,29 @@ const AuthForm = ({ type }: AuthFormProps) => {
         }
         
         // Register new user
-        const registrationSuccess = registerUser(email, password);
+        const result = registerUser(email, password);
         
-        if (!registrationSuccess) {
+        if (!result.success) {
           throw new Error("Email already registered. Please login instead.");
+        }
+        
+        // Send verification email
+        if (result.verificationToken) {
+          simulateSendVerificationEmail(email, result.verificationToken);
         }
         
         // Registration successful
         toast({
           title: "Account created successfully!",
-          description: "You can now sign in with your credentials.",
+          description: "Please check your email (console) for verification instructions.",
         });
         
-        navigate("/login");
       } else {
         // Login existing user
-        const isAuthenticated = authenticateUser(email, password);
+        const authResult = authenticateUser(email, password);
         
-        if (!isAuthenticated) {
-          throw new Error("Invalid email or password. Please try again or register if you don't have an account.");
+        if (!authResult.success) {
+          throw new Error(authResult.message);
         }
         
         // Login successful
@@ -131,6 +135,12 @@ const AuthForm = ({ type }: AuthFormProps) => {
           {isLoading ? "Processing..." : type === "login" ? "Sign In" : "Create Account"}
         </Button>
       </form>
+      
+      {type === "register" && (
+        <p className="mt-4 text-sm text-muted-foreground text-center">
+          By registering, you'll receive a verification email with a link to activate your account.
+        </p>
+      )}
     </BlurContainer>
   );
 };

@@ -15,6 +15,7 @@ import DataDetails from "./pages/DataDetails";
 import Transactions from "./pages/Transactions";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import VerifyEmail from "./pages/VerifyEmail";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import { loadRegisteredUsers } from "./utils/auth";
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/browse-data" element={<BrowseData />} />
               <Route path="/data/:id" element={<DataDetails />} />
