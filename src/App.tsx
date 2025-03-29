@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -62,13 +61,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Check if we're in a GitHub Pages environment
+// This helps determine which router to use
+const isGitHubPages = window.location.hostname.includes('github.io');
+
 const App = () => {
+  // Use environment variables if available, otherwise default to false
+  const useHashRouter = isGitHubPages || import.meta.env.VITE_USE_HASH_ROUTER === 'true';
+  
+  const Router = useHashRouter ? HashRouter : BrowserRouter;
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <Router>
           <Navbar />
           <main className="min-h-screen">
             <Routes>
@@ -101,7 +109,7 @@ const App = () => {
             </Routes>
           </main>
           <Footer />
-        </BrowserRouter>
+        </Router>
       </TooltipProvider>
     </QueryClientProvider>
   );
