@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -18,9 +19,13 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import { supabase } from "./utils/supabaseClient";
+import { toast } from "@/components/ui/use-toast";
 
 // Create a client
 const queryClient = new QueryClient();
+
+// Check if Supabase environment variables are missing
+const isMissingSupabaseConfig = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -29,18 +34,32 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setAuthenticated(!!session);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setAuthenticated(!!session);
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        // If in development with missing Supabase config, allow access for testing
+        if (isMissingSupabaseConfig && process.env.NODE_ENV === 'development') {
+          setAuthenticated(true);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
     
     checkAuth();
     
     // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setAuthenticated(!!session);
       setLoading(false);
     });
+    
+    // Warn if Supabase config is missing
+    if (isMissingSupabaseConfig) {
+      console.warn('Missing Supabase configuration. Some features will not work correctly.');
+    }
     
     // Cleanup
     return () => {
@@ -55,6 +74,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!authenticated) {
+    // Show toast notification about missing configuration in development
+    if (isMissingSupabaseConfig && process.env.NODE_ENV === 'development') {
+      toast({
+        title: "Development Mode",
+        description: "Missing Supabase configuration. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.",
+        variant: "destructive",
+      });
+    }
     return <Navigate to="/login" replace />;
   }
   
@@ -68,6 +95,18 @@ const isGitHubPages = window.location.hostname.includes('github.io');
 const App = () => {
   // Use environment variables if available, otherwise default to false
   const useHashRouter = isGitHubPages || import.meta.env.VITE_USE_HASH_ROUTER === 'true';
+  
+  // Show a warning toast if Supabase configuration is missing on first render
+  useEffect(() => {
+    if (isMissingSupabaseConfig) {
+      toast({
+        title: "Configuration Missing",
+        description: "Supabase credentials not found. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment.",
+        variant: "destructive",
+        duration: 10000, // Show for 10 seconds
+      });
+    }
+  }, []);
   
   const Router = useHashRouter ? HashRouter : BrowserRouter;
   
